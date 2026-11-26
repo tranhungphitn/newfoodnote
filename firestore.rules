@@ -3,174 +3,19 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Global Safety Net: Default-deny catch-all
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
-    function isValidId(id) {
-      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
-    }
-
-    function incoming() {
-      return request.resource.data;
-    }
-
-    function existing() {
-      return resource.data;
-    }
-
-    function isValidIngredientItem(item) {
-      return item is map
-        && item.keys().hasAll(['name', 'quantity'])
-        && item.keys().hasOnly(['name', 'quantity'])
-        && item.name is string && item.name.size() >= 1 && item.name.size() <= 160
-        && item.quantity is string && item.quantity.size() <= 80;
-    }
-
-    function isValidCookingStepItem(item) {
-      return item is map
-        && item.keys().hasAll(['step', 'description'])
-        && item.keys().hasOnly(['step', 'description'])
-        && item.step is number && item.step >= 1 && item.step <= 100
-        && item.description is string && item.description.size() >= 1 && item.description.size() <= 2000;
-    }
-
-    function isValidRecipe(data) {
-      return data is map
-        && data.keys().hasAll([
-          'name',
-          'coverImage',
-          'ingredients',
-          'cookingSteps',
-          'categoryId',
-          'frequency',
-          'isFavorite',
-          'createdAt',
-          'updatedAt'
-        ])
-        && data.keys().hasOnly([
-          'name',
-          'description',
-          'coverImage',
-          'coverImagePath',
-          'ingredients',
-          'cookingSteps',
-          'categoryId',
-          'frequency',
-          'isFavorite',
-          'createdAt',
-          'updatedAt'
-        ])
-        && data.name is string && data.name.size() >= 1 && data.name.size() <= 160
-        && (!('description' in data) || (data.description is string && data.description.size() <= 1000))
-        && data.coverImage is string && data.coverImage.size() <= 2048
-        && (!('coverImagePath' in data) || (data.coverImagePath is string && data.coverImagePath.size() <= 512))
-        && data.ingredients is list && data.ingredients.size() <= 100
-        && (data.ingredients.size() == 0 || isValidIngredientItem(data.ingredients[0]))
-        && data.cookingSteps is list && data.cookingSteps.size() <= 100
-        && (data.cookingSteps.size() == 0 || isValidCookingStepItem(data.cookingSteps[0]))
-        && data.categoryId is string && data.categoryId.size() <= 128 && data.categoryId.matches('^[a-zA-Z0-9_\\-]*$')
-        && data.frequency in ['regular', 'occasional']
-        && data.isFavorite is bool
-        && data.createdAt is timestamp
-        && data.updatedAt is timestamp;
-    }
-
-    function isValidCategory(data) {
-      return data is map
-        && data.keys().hasAll(['name', 'description', 'createdAt', 'updatedAt'])
-        && data.keys().hasOnly(['name', 'description', 'createdAt', 'updatedAt'])
-        && data.name is string && data.name.size() >= 1 && data.name.size() <= 80
-        && data.description is string && data.description.size() <= 400
-        && data.createdAt is timestamp
-        && data.updatedAt is timestamp;
-    }
-
-    function isValidNote(data) {
-      return data is map
-        && data.keys().hasAll(['title', 'content', 'createdAt', 'updatedAt'])
-        && data.keys().hasOnly(['title', 'content', 'createdAt', 'updatedAt'])
-        && data.title is string && data.title.size() >= 1 && data.title.size() <= 160
-        && data.content is string && data.content.size() <= 20000
-        && data.createdAt is timestamp
-        && data.updatedAt is timestamp;
-    }
-
-    // 'dishes' is the actual collection name in Firebase
-    match /dishes/{dishId} {
+    match /recipes/{recipeId} {
       allow read: if true;
       allow write: if true;
     }
 
-    // Keep recipes rules for backward compatibility
-    match /recipes/{recipeId} {
-      allow get: if isValidId(recipeId);
-      allow list: if true;
-
-      allow create: if isValidId(recipeId)
-        && isValidRecipe(incoming())
-        && incoming().createdAt == request.time
-        && incoming().updatedAt == request.time
-        && (incoming().categoryId == '' || exists(/databases/$(database)/documents/categories/$(incoming().categoryId)));
-
-      allow update: if isValidId(recipeId)
-        && isValidRecipe(incoming())
-        && incoming().createdAt == existing().createdAt
-        && incoming().updatedAt == request.time
-        && (
-          incoming().diff(existing()).affectedKeys().hasOnly(['isFavorite', 'updatedAt']) ||
-          (incoming().diff(existing()).affectedKeys().hasOnly([
-            'name',
-            'description',
-            'coverImage',
-            'coverImagePath',
-            'ingredients',
-            'cookingSteps',
-            'categoryId',
-            'frequency',
-            'isFavorite',
-            'updatedAt'
-          ]) && (incoming().categoryId == '' || exists(/databases/$(database)/documents/categories/$(incoming().categoryId))))
-        );
-
-      allow delete: if isValidId(recipeId);
-    }
-
     match /categories/{categoryId} {
-      allow get: if isValidId(categoryId);
-      allow list: if true;
-
-      allow create: if isValidId(categoryId)
-        && isValidCategory(incoming())
-        && incoming().createdAt == request.time
-        && incoming().updatedAt == request.time;
-
-      allow update: if isValidId(categoryId)
-        && isValidCategory(incoming())
-        && incoming().createdAt == existing().createdAt
-        && incoming().updatedAt == request.time
-        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'description', 'updatedAt']);
-
-      allow delete: if isValidId(categoryId);
+      allow read: if true;
+      allow write: if true;
     }
 
     match /notes/{noteId} {
-      allow get: if isValidId(noteId);
-      allow list: if true;
-
-      allow create: if isValidId(noteId)
-        && isValidNote(incoming())
-        && incoming().createdAt == request.time
-        && incoming().updatedAt == request.time;
-
-      allow update: if isValidId(noteId)
-        && isValidNote(incoming())
-        && incoming().createdAt == existing().createdAt
-        && incoming().updatedAt == request.time
-        && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'content', 'updatedAt']);
-
-      allow delete: if isValidId(noteId);
+      allow read: if true;
+      allow write: if true;
     }
   }
 }

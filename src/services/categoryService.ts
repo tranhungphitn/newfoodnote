@@ -18,7 +18,7 @@ import {VALIDATION_LIMITS, type Category, type CategoryInput} from '../types/mod
  * Categories don't exist as a separate collection in Firebase.
  * Instead, we derive them from the 'category' field of each dish in the 'dishes' collection.
  */
-const DISHES_COLLECTION = 'dishes';
+const RECIPES_COLLECTION = 'recipes';
 const CATEGORIES_COLLECTION = 'categories';
 
 function sanitizeCategoryInput(input: CategoryInput) {
@@ -39,7 +39,7 @@ export function subscribeCategories(
   onError: (err: unknown) => void
 ): Unsubscribe {
   return onSnapshot(
-    collection(db, DISHES_COLLECTION),
+    collection(db, RECIPES_COLLECTION),
     (snapshot) => {
       const categoryNames = new Set<string>();
       snapshot.docs.forEach((docSnap) => {
@@ -61,7 +61,7 @@ export function subscribeCategories(
     },
     (error) => {
       try {
-        handleFirestoreError(error, OperationType.LIST, DISHES_COLLECTION);
+        handleFirestoreError(error, OperationType.LIST, RECIPES_COLLECTION);
       } catch (wrapped) {
         onError(wrapped);
       }

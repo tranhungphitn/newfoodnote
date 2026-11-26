@@ -22,8 +22,8 @@ import {
 } from '../types/models';
 import {deleteRecipeImageByPath} from './storageService';
 
-/* Firebase collection is 'dishes', not 'recipes' */
-const COLLECTION_PATH = 'dishes';
+/* Firebase collection */
+const COLLECTION_PATH = 'recipes';
 
 /**
  * Parse a newline-separated string of ingredients into Ingredient[].
