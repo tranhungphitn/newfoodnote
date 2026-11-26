@@ -1,0 +1,6 @@
+{
+  "name": "My Recipe & Notes",
+  "description": "Sổ tay công thức nấu ăn và ghi chú bếp cá nhân hiện đại, hỗ trợ PWA và lưu trữ thời gian thực với Firebase.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

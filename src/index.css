@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-serif: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, sans-serif;
+
+  --color-gallery: #FFFFFF;
+  --color-mist: #F7F7F5;
+  --color-rule: #E4E4E0;
+  --color-ink: #111110;
+  --color-slate-ink: #52524E;
+  --color-stone-muted: #787872;
+
+  --color-accent-orange: #EA580C;
+  --color-accent-orange-hover: #C2410C;
+  --color-accent-blue: #1D4ED8;
+  --color-accent-blue-hover: #1E40AF;
+  --color-accent-red: #DC2626;
+  --color-accent-red-hover: #B91C1C;
+  --color-accent-green: #047857;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    background-color: var(--color-gallery);
+    color: var(--color-ink);
+    -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--color-gallery);
+    color: var(--color-ink);
+    overflow-x: hidden;
+    min-height: 100dvh;
+  }
+
+  h1, h2, h3, .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+  }
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
