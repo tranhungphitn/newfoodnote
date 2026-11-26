@@ -64,7 +64,7 @@ export const Pagination: React.FC<PaginationProps> = ({
   return (
     <nav
       aria-label="Phân trang"
-      className="flex flex-col items-center justify-between gap-4 border-t border-[#E4E4E0] pt-6 sm:flex-row"
+      className="flex flex-col items-center justify-center gap-4 border-t border-[#E4E4E0] pt-6"
     >
       <div className="flex flex-wrap items-center justify-center gap-1.5">
         <button
