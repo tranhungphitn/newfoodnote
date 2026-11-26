@@ -22,10 +22,6 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
   onToggleFavorite,
   togglingFavorite = false,
 }) => {
-  const frequencyLabel = recipe.frequency === 'regular' ? 'Thường ăn' : 'Ít ăn';
-  const frequencyColor =
-    recipe.frequency === 'regular' ? 'text-[#047857]' : 'text-[#EA580C]';
-  const ingredientCount = recipe.ingredients.length;
   const formattedIndex =
     typeof indexNumber === 'number' ? String(indexNumber).padStart(2, '0') : null;
   const categoryAccent = getCategoryAccent(recipe.categoryId);
@@ -96,18 +92,10 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
           {recipe.name}
         </h3>
 
-        <div className="mt-auto pt-2 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] sm:gap-x-2 sm:pt-2.5 sm:text-xs">
-          <span className={`font-semibold ${frequencyColor}`}>{frequencyLabel}</span>
-          {ingredientCount > 0 && (
-            <>
-              <span aria-hidden="true" className="text-[#C7C7C2]">
-                /
-              </span>
-              <span className="font-medium tabular-nums text-[#52524E]">
-                {ingredientCount} ng.liệu
-              </span>
-            </>
-          )}
+        <div className="mt-auto pt-2 sm:pt-2.5">
+          <p className="line-clamp-2 text-[11px] leading-relaxed text-[#52524E] sm:text-xs">
+            {recipe.description || 'Chưa có mô tả.'}
+          </p>
         </div>
       </Link>
     </article>

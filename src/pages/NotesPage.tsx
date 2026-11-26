@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import {useAuth} from '../contexts/AuthContext';
 import {useData} from '../contexts/DataContext';
-import {formatRelativeDate, formatTimestamp} from '../types/models';
+import {formatRelativeDate} from '../types/models';
 import {matchesVietnameseQuery} from '../lib/vietnameseSearch';
 import {EmptyState} from '../components/EmptyState';
 import {PageBanner} from '../components/PageBanner';
@@ -180,21 +180,6 @@ export const NotesPage: React.FC = () => {
                 key={note.id}
                 className="group relative flex flex-col justify-between border border-[#E4E4E0] border-t-2 border-t-[#1D4ED8] bg-white p-5 transition-colors hover:border-[#111110] sm:p-6"
               >
-                {/* Delete button */}
-                {isAdmin && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setDeleteTarget({id: note.id, title: note.title});
-                    }}
-                    aria-label={`Xóa ghi chú "${note.title}"`}
-                    className="absolute top-3 right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-[#787872] opacity-0 shadow-sm border border-[#E4E4E0] transition-all hover:bg-[#FEF2F2] hover:text-[#B91C1C] hover:border-[#FECACA] group-hover:opacity-100 focus:opacity-100"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                )}
 
                 <Link to={`/notes/${note.id}`} className="flex flex-col flex-1">
                   <div>
@@ -202,9 +187,21 @@ export const NotesPage: React.FC = () => {
                       <span className="font-extrabold text-[#1D4ED8]">
                         {String((currentPage - 1) * ITEMS_PER_PAGE + idx + 1).padStart(2, '0')}
                       </span>
-                      <span className="font-medium text-[#787872]">
-                        {formatTimestamp(note.updatedAt)}
-                      </span>
+                      {/* Delete button in top-right corner */}
+                      {isAdmin && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setDeleteTarget({id: note.id, title: note.title});
+                          }}
+                          aria-label={`Xóa ghi chú "${note.title}"`}
+                          className="flex h-7 w-7 items-center justify-center rounded-full text-[#787872] transition-all hover:bg-[#FEF2F2] hover:text-[#B91C1C]"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                     </div>
 
                     <h2 className="mt-3 font-display line-clamp-2 text-lg font-bold leading-snug text-[#111110] group-hover:text-[#1D4ED8] transition-colors">
