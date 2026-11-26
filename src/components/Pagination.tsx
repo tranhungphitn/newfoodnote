@@ -66,18 +66,6 @@ export const Pagination: React.FC<PaginationProps> = ({
       aria-label="Phân trang"
       className="flex flex-col items-center justify-between gap-4 border-t border-[#E4E4E0] pt-6 sm:flex-row"
     >
-      <p className="text-xs font-medium tabular-nums text-[#52524E]">
-        Hiển thị{' '}
-        <span className="font-bold text-[#111110]">
-          {String(startItem).padStart(2, '0')}–{String(endItem).padStart(2, '0')}
-        </span>{' '}
-        / <span className="font-bold text-[#111110]">{totalItems}</span> {itemLabel}
-        <span className="mx-2 text-[#C7C7C2]" aria-hidden="true">
-          ·
-        </span>
-        Trang <span className="font-bold text-[#111110]">{safePage}</span> / {totalPages}
-      </p>
-
       <div className="flex flex-wrap items-center justify-center gap-1.5">
         <button
           type="button"
