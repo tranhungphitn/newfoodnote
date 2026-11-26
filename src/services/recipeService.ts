@@ -23,7 +23,7 @@ import {
 import {deleteRecipeImageByPath} from './storageService';
 
 /* Firebase collection */
-const COLLECTION_PATH = 'recipes';
+const COLLECTION_PATH = 'dishes';
 
 /**
  * Parse a newline-separated string of ingredients into Ingredient[].

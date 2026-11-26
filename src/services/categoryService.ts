@@ -18,7 +18,7 @@ import {VALIDATION_LIMITS, type Category, type CategoryInput} from '../types/mod
  * Categories don't exist as a separate collection in Firebase.
  * Instead, we derive them from the 'category' field of each dish in the 'dishes' collection.
  */
-const RECIPES_COLLECTION = 'recipes';
+const RECIPES_COLLECTION = 'dishes';
 const CATEGORIES_COLLECTION = 'categories';
 
 function sanitizeCategoryInput(input: CategoryInput) {
