@@ -14,7 +14,7 @@ import {useToast} from '../contexts/ToastContext';
 import {deleteRecipe, getRecipeById, toggleRecipeFavorite} from '../services/recipeService';
 import {getFriendlyErrorMessage} from '../lib/firestoreError';
 import {getCategoryAccent} from '../lib/accentPalette';
-import {formatTimestamp, type Recipe} from '../types/models';
+import {type Recipe} from '../types/models';
 import {RecipeImage} from '../components/RecipeImage';
 import {ConfirmDialog} from '../components/ConfirmDialog';
 import {EmptyState} from '../components/EmptyState';
@@ -119,9 +119,6 @@ export const RecipeDetailPage: React.FC = () => {
 
   const category = categoryMap.get(recipe.categoryId);
   const categoryAccent = getCategoryAccent(recipe.categoryId);
-  const frequencyLabel = recipe.frequency === 'regular' ? 'Thường ăn' : 'Ít ăn';
-  const frequencyColor =
-    recipe.frequency === 'regular' ? 'text-[#047857]' : 'text-[#EA580C]';
 
   return (
     <article className="space-y-8 sm:space-y-10">
@@ -190,12 +187,6 @@ export const RecipeDetailPage: React.FC = () => {
                 {category.name}
               </Link>
             )}
-            {recipe.isFavorite && (
-              <span className="inline-flex items-center gap-1 text-xs font-bold text-[#DC2626]">
-                <Heart className="h-3.5 w-3.5 fill-current" />
-                <span>Món yêu thích</span>
-              </span>
-            )}
           </div>
           <h1 className="mt-2 font-display text-2xl font-bold leading-[1.18] text-[#111110] sm:text-3xl lg:text-[38px]">
             {recipe.name}
@@ -239,31 +230,6 @@ export const RecipeDetailPage: React.FC = () => {
                 </p>
               )}
             </div>
-
-            <dl className="grid grid-cols-2 gap-x-6 gap-y-3 border-y border-[#E4E4E0] py-3.5 sm:grid-cols-4">
-              <div>
-                <dt className="text-[11px] font-medium text-[#787872]">Tần suất</dt>
-                <dd className={`mt-0.5 text-xs font-bold ${frequencyColor}`}>{frequencyLabel}</dd>
-              </div>
-              <div>
-                <dt className="text-[11px] font-medium text-[#787872]">Nguyên liệu</dt>
-                <dd className="mt-0.5 text-xs font-bold tabular-nums text-[#EA580C]">
-                  {recipe.ingredients.length} mục
-                </dd>
-              </div>
-              <div>
-                <dt className="text-[11px] font-medium text-[#787872]">Thực hiện</dt>
-                <dd className="mt-0.5 text-xs font-bold tabular-nums text-[#1D4ED8]">
-                  {recipe.cookingSteps.length} bước
-                </dd>
-              </div>
-              <div>
-                <dt className="text-[11px] font-medium text-[#787872]">Cập nhật</dt>
-                <dd className="mt-0.5 text-xs font-medium tabular-nums text-[#52524E]">
-                  {formatTimestamp(recipe.updatedAt)}
-                </dd>
-              </div>
-            </dl>
           </div>
         </div>
       </header>
