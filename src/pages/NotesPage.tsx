@@ -4,10 +4,9 @@ import {
   AlertCircle,
   ArrowUpRight,
   FileText,
-  LayoutGrid,
-  List,
   Plus,
   Search,
+  Trash2,
   X,
 } from 'lucide-react';
 import {useAuth} from '../contexts/AuthContext';
@@ -18,19 +17,10 @@ import {EmptyState} from '../components/EmptyState';
 import {PageBanner} from '../components/PageBanner';
 import {NoteListSkeleton} from '../components/Skeletons';
 import {Pagination} from '../components/Pagination';
-
-type NotesViewMode = 'list' | 'grid';
+import {ConfirmDialog} from '../components/ConfirmDialog';
+import {deleteNote} from '../services/noteService';
 
 const ITEMS_PER_PAGE = 12;
-const VIEW_MODE_STORAGE_KEY = 'my_recipe_notes_view_mode';
-
-function readSavedViewMode(): NotesViewMode {
-  try {
-    return window.localStorage.getItem(VIEW_MODE_STORAGE_KEY) === 'grid' ? 'grid' : 'list';
-  } catch {
-    return 'list';
-  }
-}
 
 export const NotesPage: React.FC = () => {
   const {isAdmin} = useAuth();
@@ -38,20 +28,14 @@ export const NotesPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [queryText, setQueryText] = useState('');
-  const [viewMode, setViewMode] = useState<NotesViewMode>(readSavedViewMode);
   const isComposingRef = useRef(false);
+
+  // Delete confirmation state
+  const [deleteTarget, setDeleteTarget] = useState<{id: string; title: string} | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const rawPage = Number.parseInt(searchParams.get('page') || '1', 10);
   const urlPage = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
-
-  const handleViewModeChange = (mode: NotesViewMode) => {
-    setViewMode(mode);
-    try {
-      window.localStorage.setItem(VIEW_MODE_STORAGE_KEY, mode);
-    } catch {
-      // Ignore storage quota / privacy mode errors
-    }
-  };
 
   const setPageParam = (page: number) => {
     setSearchParams(
@@ -97,6 +81,19 @@ export const NotesPage: React.FC = () => {
     window.scrollTo({top: 0, behavior: 'smooth'});
   };
 
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deleteNote(deleteTarget.id);
+    } catch {
+      // Error handled by service layer
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
+  };
+
   return (
     <div className="space-y-6 sm:space-y-8">
       <PageBanner
@@ -128,7 +125,7 @@ export const NotesPage: React.FC = () => {
         )}
       </header>
 
-      {/* Search Bar + List / Grid View Switcher */}
+      {/* Search Bar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative flex-1 sm:max-w-lg">
           <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#787872]" />
@@ -161,39 +158,6 @@ export const NotesPage: React.FC = () => {
             </button>
           )}
         </div>
-
-        <div
-          role="group"
-          aria-label="Chế độ hiển thị ghi chú"
-          className="grid grid-cols-2 border border-[#E4E4E0] bg-[#F7F7F5] p-0.5 sm:inline-flex shrink-0"
-        >
-          <button
-            type="button"
-            onClick={() => handleViewModeChange('list')}
-            aria-pressed={viewMode === 'list'}
-            className={`inline-flex min-h-[40px] items-center justify-center gap-1.5 px-3.5 text-xs font-semibold transition-colors whitespace-nowrap ${
-              viewMode === 'list'
-                ? 'bg-[#1D4ED8] text-white'
-                : 'text-[#52524E] hover:text-[#111110]'
-            }`}
-          >
-            <List className="h-4 w-4" />
-            <span>Danh sách</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleViewModeChange('grid')}
-            aria-pressed={viewMode === 'grid'}
-            className={`inline-flex min-h-[40px] items-center justify-center gap-1.5 px-3.5 text-xs font-semibold transition-colors whitespace-nowrap ${
-              viewMode === 'grid'
-                ? 'bg-[#1D4ED8] text-white'
-                : 'text-[#52524E] hover:text-[#111110]'
-            }`}
-          >
-            <LayoutGrid className="h-4 w-4" />
-            <span>Lưới</span>
-          </button>
-        </div>
       </div>
 
       {notesError && (
@@ -210,47 +174,29 @@ export const NotesPage: React.FC = () => {
         <NoteListSkeleton count={5} />
       ) : paginatedNotes.length > 0 ? (
         <>
-          {viewMode === 'list' ? (
-            <div className="divide-y divide-[#E4E4E0] border-y border-[#E4E4E0]">
-              {paginatedNotes.map((note, idx) => (
-                <Link
-                  key={note.id}
-                  to={`/notes/${note.id}`}
-                  className="group grid grid-cols-1 items-baseline gap-2.5 py-5 transition-colors hover:bg-[#EFF6FF]/60 sm:py-6 md:grid-cols-12 md:gap-6 md:px-4"
-                >
-                  <div className="flex items-center gap-3 text-xs font-medium tabular-nums text-[#787872] md:col-span-3 md:flex-col md:items-start md:gap-1">
-                    <span className="font-bold text-[#1D4ED8]">
-                      {String((currentPage - 1) * ITEMS_PER_PAGE + idx + 1).padStart(2, '0')}
-                    </span>
-                    <span>{formatTimestamp(note.updatedAt)}</span>
-                    <span className="hidden md:inline text-[11px]">
-                      {formatRelativeDate(note.updatedAt)}
-                    </span>
-                  </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
+            {paginatedNotes.map((note, idx) => (
+              <div
+                key={note.id}
+                className="group relative flex flex-col justify-between border border-[#E4E4E0] border-t-2 border-t-[#1D4ED8] bg-white p-5 transition-colors hover:border-[#111110] sm:p-6"
+              >
+                {/* Delete button */}
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setDeleteTarget({id: note.id, title: note.title});
+                    }}
+                    aria-label={`Xóa ghi chú "${note.title}"`}
+                    className="absolute top-3 right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-[#787872] opacity-0 shadow-sm border border-[#E4E4E0] transition-all hover:bg-[#FEF2F2] hover:text-[#B91C1C] hover:border-[#FECACA] group-hover:opacity-100 focus:opacity-100"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                )}
 
-                  <div className="md:col-span-8">
-                    <h2 className="font-display text-lg font-bold leading-snug text-[#111110] group-hover:text-[#1D4ED8] transition-colors sm:text-xl">
-                      {note.title}
-                    </h2>
-                    <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-[#52524E] whitespace-pre-line">
-                      {note.content || 'Ghi chú chưa có nội dung.'}
-                    </p>
-                  </div>
-
-                  <div className="hidden justify-end md:col-span-1 md:flex">
-                    <ArrowUpRight className="h-4 w-4 text-[#787872] group-hover:text-[#1D4ED8] transition-colors" />
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
-              {paginatedNotes.map((note, idx) => (
-                <Link
-                  key={note.id}
-                  to={`/notes/${note.id}`}
-                  className="group flex flex-col justify-between border border-[#E4E4E0] border-t-2 border-t-[#1D4ED8] bg-white p-5 transition-colors hover:border-[#111110] sm:p-6"
-                >
+                <Link to={`/notes/${note.id}`} className="flex flex-col flex-1">
                   <div>
                     <div className="flex items-center justify-between gap-2 text-xs tabular-nums">
                       <span className="font-extrabold text-[#1D4ED8]">
@@ -278,9 +224,9 @@ export const NotesPage: React.FC = () => {
                     </span>
                   </div>
                 </Link>
-              ))}
-            </div>
-          )}
+              </div>
+            ))}
+          </div>
 
           <Pagination
             currentPage={currentPage}
@@ -312,6 +258,17 @@ export const NotesPage: React.FC = () => {
           actionTo={isAdmin ? '/notes/new' : undefined}
         />
       )}
+
+      {/* Confirm Delete Dialog */}
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="Xóa ghi chú?"
+        description={`Bạn có chắc muốn xóa "${deleteTarget?.title ?? ''}"? Thao tác này không thể hoàn tác.`}
+        confirmLabel="Xóa ghi chú"
+        loading={deleting}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 };
