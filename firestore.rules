@@ -97,6 +97,13 @@ service cloud.firestore {
         && data.updatedAt is timestamp;
     }
 
+    // 'dishes' is the actual collection name in Firebase
+    match /dishes/{dishId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Keep recipes rules for backward compatibility
     match /recipes/{recipeId} {
       allow get: if isValidId(recipeId);
       allow list: if true;
