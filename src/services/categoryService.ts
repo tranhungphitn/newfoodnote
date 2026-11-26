@@ -4,6 +4,8 @@ import {
   deleteDoc,
   doc,
   onSnapshot,
+  orderBy,
+  query,
   serverTimestamp,
   updateDoc,
   type DocumentData,
@@ -14,12 +16,18 @@ import {db} from '../lib/firebase';
 import {handleFirestoreError, OperationType} from '../lib/firestoreError';
 import {VALIDATION_LIMITS, type Category, type CategoryInput} from '../types/models';
 
-/**
- * Categories don't exist as a separate collection in Firebase.
- * Instead, we derive them from the 'category' field of each dish in the 'dishes' collection.
- */
-const RECIPES_COLLECTION = 'dishes';
-const CATEGORIES_COLLECTION = 'categories';
+const COLLECTION_PATH = 'categories';
+
+function mapCategoryDoc(snap: QueryDocumentSnapshot<DocumentData>): Category {
+  const data = snap.data();
+  return {
+    id: snap.id,
+    name: typeof data.name === 'string' ? data.name : '',
+    description: typeof data.description === 'string' ? data.description : '',
+    createdAt: data.createdAt ?? null,
+    updatedAt: data.updatedAt ?? null,
+  };
+}
 
 function sanitizeCategoryInput(input: CategoryInput) {
   const name = input.name.trim().slice(0, VALIDATION_LIMITS.CATEGORY_NAME_MAX);
@@ -30,38 +38,19 @@ function sanitizeCategoryInput(input: CategoryInput) {
   return {name, description};
 }
 
-/**
- * Subscribe to categories derived dynamically from the 'category' field
- * of all documents in the 'dishes' collection.
- */
 export function subscribeCategories(
   onData: (categories: Category[]) => void,
   onError: (err: unknown) => void
 ): Unsubscribe {
+  const q = query(collection(db, COLLECTION_PATH), orderBy('name', 'asc'));
   return onSnapshot(
-    collection(db, RECIPES_COLLECTION),
+    q,
     (snapshot) => {
-      const categoryNames = new Set<string>();
-      snapshot.docs.forEach((docSnap) => {
-        const cat = docSnap.data().category;
-        if (typeof cat === 'string' && cat.trim()) {
-          categoryNames.add(cat.trim());
-        }
-      });
-      const categories: Category[] = Array.from(categoryNames)
-        .sort((a, b) => a.localeCompare(b, 'vi'))
-        .map((name) => ({
-          id: name,
-          name,
-          description: '',
-          createdAt: null,
-          updatedAt: null,
-        }));
-      onData(categories);
+      onData(snapshot.docs.map(mapCategoryDoc));
     },
     (error) => {
       try {
-        handleFirestoreError(error, OperationType.LIST, RECIPES_COLLECTION);
+        handleFirestoreError(error, OperationType.LIST, COLLECTION_PATH);
       } catch (wrapped) {
         onError(wrapped);
       }
@@ -72,22 +61,22 @@ export function subscribeCategories(
 export async function createCategory(input: CategoryInput): Promise<string> {
   const sanitized = sanitizeCategoryInput(input);
   try {
-    const ref = await addDoc(collection(db, CATEGORIES_COLLECTION), {
+    const ref = await addDoc(collection(db, COLLECTION_PATH), {
       ...sanitized,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
     return ref.id;
   } catch (error) {
-    handleFirestoreError(error, OperationType.CREATE, CATEGORIES_COLLECTION);
+    handleFirestoreError(error, OperationType.CREATE, COLLECTION_PATH);
   }
 }
 
 export async function updateCategory(id: string, input: CategoryInput): Promise<void> {
   const sanitized = sanitizeCategoryInput(input);
-  const path = `${CATEGORIES_COLLECTION}/${id}`;
+  const path = `${COLLECTION_PATH}/${id}`;
   try {
-    await updateDoc(doc(db, CATEGORIES_COLLECTION, id), {
+    await updateDoc(doc(db, COLLECTION_PATH, id), {
       ...sanitized,
       updatedAt: serverTimestamp(),
     });
@@ -97,9 +86,9 @@ export async function updateCategory(id: string, input: CategoryInput): Promise<
 }
 
 export async function deleteCategory(id: string): Promise<void> {
-  const path = `${CATEGORIES_COLLECTION}/${id}`;
+  const path = `${COLLECTION_PATH}/${id}`;
   try {
-    await deleteDoc(doc(db, CATEGORIES_COLLECTION, id));
+    await deleteDoc(doc(db, COLLECTION_PATH, id));
   } catch (error) {
     handleFirestoreError(error, OperationType.DELETE, path);
   }

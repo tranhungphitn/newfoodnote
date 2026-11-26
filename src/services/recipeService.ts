@@ -5,6 +5,8 @@ import {
   doc,
   getDoc,
   onSnapshot,
+  orderBy,
+  query,
   serverTimestamp,
   updateDoc,
   type DocumentData,
@@ -22,80 +24,29 @@ import {
 } from '../types/models';
 import {deleteRecipeImageByPath} from './storageService';
 
-/* Firebase collection */
-const COLLECTION_PATH = 'dishes';
-
-/**
- * Parse a newline-separated string of ingredients into Ingredient[].
- * Handles lines like "- 500g thịt heo" or plain "500g thịt heo".
- */
-function parseIngredients(raw: unknown): Ingredient[] {
-  if (Array.isArray(raw)) {
-    return raw.map((item) => ({
-      name: typeof item?.name === 'string' ? item.name : String(item ?? ''),
-      quantity: typeof item?.quantity === 'string' ? item.quantity : '',
-    })).filter((i) => i.name.length > 0);
-  }
-  if (typeof raw === 'string' && raw.trim()) {
-    return raw
-      .split('\n')
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0)
-      .map((line) => ({
-        name: line.replace(/^[-•]\s*/, ''),
-        quantity: '',
-      }));
-  }
-  return [];
-}
-
-/**
- * Parse a string of numbered instructions into CookingStep[].
- * Handles "1. Do X\n2. Do Y" and also plain text (single step).
- */
-function parseInstructions(raw: unknown): CookingStep[] {
-  if (Array.isArray(raw)) {
-    return raw.map((item, idx) => ({
-      step: typeof item?.step === 'number' ? item.step : idx + 1,
-      description: typeof item?.description === 'string' ? item.description : String(item ?? ''),
-    })).filter((s) => s.description.length > 0);
-  }
-  if (typeof raw === 'string' && raw.trim()) {
-    // Try splitting on numbered patterns like "1." "2." etc.
-    const parts = raw.split(/\n(?=\d+\.\s)/).map((s) => s.trim()).filter(Boolean);
-    if (parts.length > 1) {
-      return parts.map((part, idx) => ({
-        step: idx + 1,
-        description: part.replace(/^\d+\.\s*/, ''),
-      }));
-    }
-    // Fallback: split by newline, each line is a step
-    const lines = raw.split('\n').map((s) => s.trim()).filter(Boolean);
-    return lines.map((line, idx) => ({
-      step: idx + 1,
-      description: line.replace(/^\d+\.\s*/, ''),
-    }));
-  }
-  return [];
-}
+const COLLECTION_PATH = 'recipes';
 
 function mapRecipeDoc(snap: QueryDocumentSnapshot<DocumentData>): Recipe {
   const data = snap.data();
   return {
     id: snap.id,
     name: typeof data.name === 'string' ? data.name : '',
-    // 'summary' in Firebase → 'description' in app
-    description: typeof data.summary === 'string' ? data.summary
-      : typeof data.description === 'string' ? data.description : '',
-    // 'imageUrl' in Firebase → 'coverImage' in app
-    coverImage: typeof data.imageUrl === 'string' ? data.imageUrl
-      : typeof data.coverImage === 'string' ? data.coverImage : '',
+    description: typeof data.description === 'string' ? data.description : '',
+    coverImage: typeof data.coverImage === 'string' ? data.coverImage : '',
     coverImagePath: typeof data.coverImagePath === 'string' ? data.coverImagePath : '',
-    ingredients: parseIngredients(data.ingredients),
-    cookingSteps: parseInstructions(data.instructions ?? data.cookingSteps),
-    // 'category' (name string) in Firebase → 'categoryId' in app
-    categoryId: typeof data.category === 'string' ? data.category
-      : typeof data.categoryId === 'string' ? data.categoryId : '',
+    ingredients: Array.isArray(data.ingredients)
+      ? data.ingredients.map((item: Record<string, unknown>) => ({
+          name: typeof item?.name === 'string' ? item.name : '',
+          quantity: typeof item?.quantity === 'string' ? item.quantity : '',
+        }))
+      : [],
+    cookingSteps: Array.isArray(data.cookingSteps)
+      ? data.cookingSteps.map((item: Record<string, unknown>, idx: number) => ({
+          step: typeof item?.step === 'number' ? item.step : idx + 1,
+          description: typeof item?.description === 'string' ? item.description : '',
+        }))
+      : [],
+    categoryId: typeof data.categoryId === 'string' ? data.categoryId : '',
     frequency: data.frequency === 'occasional' ? 'occasional' : 'regular',
     isFavorite: Boolean(data.isFavorite),
     createdAt: data.createdAt ?? null,
@@ -149,7 +100,6 @@ function sanitizeRecipeInput(input: RecipeInput) {
       description,
     }));
 
-  // Category IDs are now Vietnamese category names (e.g. "Món Heo"), so skip pattern check
   const categoryId = (input.categoryId || '').trim().slice(0, VALIDATION_LIMITS.CATEGORY_ID_MAX);
 
   const frequency = input.frequency === 'occasional' ? 'occasional' : 'regular';
@@ -172,18 +122,11 @@ export function subscribeRecipes(
   onData: (recipes: Recipe[]) => void,
   onError: (err: unknown) => void
 ): Unsubscribe {
-  // Fetch all dishes without orderBy to avoid Firestore index requirements.
-  // Sort in-memory since some docs may have string dates or missing updatedAt.
+  const q = query(collection(db, COLLECTION_PATH), orderBy('updatedAt', 'desc'));
   return onSnapshot(
-    collection(db, COLLECTION_PATH),
+    q,
     (snapshot) => {
-      const recipes = snapshot.docs.map(mapRecipeDoc);
-      recipes.sort((a, b) => {
-        const ta = a.updatedAt ? String(a.updatedAt) : '';
-        const tb = b.updatedAt ? String(b.updatedAt) : '';
-        return tb.localeCompare(ta); // desc
-      });
-      onData(recipes);
+      onData(snapshot.docs.map(mapRecipeDoc));
     },
     (error) => {
       try {
