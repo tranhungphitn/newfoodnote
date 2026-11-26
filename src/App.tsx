@@ -10,7 +10,7 @@ import {ToastProvider} from './contexts/ToastContext';
 import {ErrorBoundary} from './components/ErrorBoundary';
 import {Layout} from './components/Layout';
 import {AdminRoute} from './components/AdminRoute';
-import {HomePage} from './pages/HomePage';
+
 import {RecipesPage} from './pages/RecipesPage';
 import {RecipeDetailPage} from './pages/RecipeDetailPage';
 import {RecipeFormPage} from './pages/RecipeFormPage';
@@ -31,7 +31,7 @@ export default function App() {
                 <Route path="/login" element={<LoginPage />} />
 
                 <Route element={<Layout />}>
-                  <Route index element={<HomePage />} />
+                  <Route index element={<Navigate to="/recipes" replace />} />
 
                   <Route path="/recipes" element={<RecipesPage />} />
                   <Route

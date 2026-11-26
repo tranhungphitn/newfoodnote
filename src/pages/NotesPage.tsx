@@ -104,13 +104,8 @@ export const NotesPage: React.FC = () => {
 
       <header className="flex flex-wrap items-end justify-between gap-3 border-b-2 border-[#1D4ED8] pb-4 sm:pb-5">
         <div>
-          <p className="text-xs font-bold text-[#1D4ED8] tabular-nums">
-            {loadingNotes
-              ? 'Đang tải...'
-              : `${String(filteredNotes.length).padStart(2, '0')} / ${String(notes.length).padStart(2, '0')} ghi chú`}
-          </p>
-          <h1 className="mt-1 font-display text-2xl font-bold text-[#111110] sm:mt-1.5 sm:text-4xl">
-            Sổ ghi chép bếp
+          <h1 className="font-display text-2xl font-bold text-[#111110] sm:text-4xl">
+            Ghi Chú
           </h1>
         </div>
 
@@ -178,13 +173,17 @@ export const NotesPage: React.FC = () => {
             {paginatedNotes.map((note, idx) => (
               <div
                 key={note.id}
-                className="group relative flex flex-col justify-between border border-[#E4E4E0] border-t-2 border-t-[#1D4ED8] bg-white p-5 transition-colors hover:border-[#111110] sm:p-6"
+                className={`group relative flex flex-col justify-between border border-[#E4E4E0] border-t-2 p-5 transition-colors hover:border-[#111110] sm:p-6 ${
+                  idx % 2 === 0
+                    ? 'border-t-[#1D4ED8] bg-white'
+                    : 'border-t-[#EA580C] bg-[#FFFBF5]'
+                }`}
               >
 
                 <Link to={`/notes/${note.id}`} className="flex flex-col flex-1">
                   <div>
                     <div className="flex items-center justify-between gap-2 text-xs tabular-nums">
-                      <span className="font-extrabold text-[#1D4ED8]">
+                      <span className={`font-extrabold ${idx % 2 === 0 ? 'text-[#1D4ED8]' : 'text-[#EA580C]'}`}>
                         {String((currentPage - 1) * ITEMS_PER_PAGE + idx + 1).padStart(2, '0')}
                       </span>
                       {/* Delete button in top-right corner */}

@@ -214,13 +214,8 @@ export const RecipesPage: React.FC = () => {
       {/* Editorial Directory Masthead */}
       <header className="flex flex-wrap items-end justify-between gap-3 border-b-2 border-[#EA580C] pb-4 sm:pb-5">
         <div>
-          <p className="text-xs font-bold text-[#EA580C] tabular-nums">
-            {loadingRecipes
-              ? 'Đang tải...'
-              : `${String(filteredRecipes.length).padStart(2, '0')} / ${String(recipes.length).padStart(2, '0')} công thức`}
-          </p>
-          <h1 className="mt-1 font-display text-2xl font-bold text-[#111110] sm:mt-1.5 sm:text-4xl">
-            Mục lục công thức
+          <h1 className="font-display text-2xl font-bold text-[#111110] sm:text-4xl">
+            Món ăn
           </h1>
         </div>
 
@@ -230,7 +225,7 @@ export const RecipesPage: React.FC = () => {
             className="inline-flex min-h-[44px] items-center gap-1.5 rounded-sm bg-[#EA580C] px-4 text-xs font-semibold text-white hover:bg-[#C2410C] transition-colors whitespace-nowrap shrink-0 sm:px-5"
           >
             <Plus className="h-4 w-4" />
-            <span>Thêm công thức</span>
+            <span>Thêm món ăn</span>
           </Link>
         )}
       </header>

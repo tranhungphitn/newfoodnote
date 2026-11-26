@@ -4,7 +4,7 @@ import {
   ChefHat,
   FileText,
   FolderOpen,
-  Home,
+
   LogIn,
   LogOut,
   Plus,
@@ -18,16 +18,8 @@ import {OfflineIndicator} from './OfflineIndicator';
 
 const NAV_ITEMS = [
   {
-    to: '/',
-    label: 'Tổng quan',
-    icon: Home,
-    end: true,
-    activeDesktop: 'font-semibold text-[#111110] after:bg-[#111110]',
-    activeMobile: 'text-white',
-  },
-  {
     to: '/recipes',
-    label: 'Công thức',
+    label: 'Món ăn',
     icon: ChefHat,
     end: false,
     activeDesktop: 'font-semibold text-[#EA580C] after:bg-[#EA580C]',
@@ -124,7 +116,7 @@ export const Layout: React.FC = () => {
                   className="inline-flex h-10 items-center gap-2 rounded-sm bg-[#EA580C] px-4 text-xs font-semibold text-white hover:bg-[#C2410C] transition-colors whitespace-nowrap shrink-0"
                 >
                   <Plus className="h-3.5 w-3.5" />
-                  <span>Công thức mới</span>
+                  <span>Món ăn mới</span>
                 </Link>
                 <button
                   type="button"
@@ -198,7 +190,7 @@ export const Layout: React.FC = () => {
           </span>
           <div className="flex items-center gap-6 font-medium">
             <Link to="/recipes" className="hover:text-[#EA580C] transition-colors">
-              Công thức
+              Món ăn
             </Link>
             <Link to="/notes" className="hover:text-[#1D4ED8] transition-colors">
               Ghi chú
@@ -301,7 +293,7 @@ export const Layout: React.FC = () => {
                   <UtensilsCrossed className="h-4 w-4" />
                 </span>
                 <div>
-                  <p className="text-sm font-semibold text-[#111110]">Thêm công thức mới</p>
+                  <p className="text-sm font-semibold text-[#111110]">Thêm món ăn mới</p>
                   <p className="text-xs text-[#52524E]">Ảnh món ăn, nguyên liệu và các bước nấu</p>
                 </div>
               </button>
